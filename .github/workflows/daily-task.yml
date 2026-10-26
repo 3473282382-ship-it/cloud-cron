@@ -1,0 +1,37 @@
+name: daily-task
+
+# 定时触发。cron 用 UTC 时间，北京时间要减 8 小时。
+# 下面这行 = 每天北京时间 08:00 跑一次
+on:
+  schedule:
+    - cron: '0 0 * * *'
+  # 也可以手动点按钮跑，方便测试
+  workflow_dispatch:
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: 拉取代码
+        uses: actions/checkout@v4
+
+      - name: 装 Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: 执行任务
+        env:
+          PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}
+        run: node scripts/task.mjs
+
+      # 跑完把日志作为附件留档，方便回头查
+      - name: 保存日志
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: run-log
+          path: out/
+          retention-days: 7
